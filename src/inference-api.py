@@ -1,15 +1,27 @@
 #!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+@author: Emmanuel Raj
+"""
 
-import fire
+import pickle
+from flask import Flask, request
 import json
 import os
 import numpy as np
 import tensorflow as tf
+from flasgger import Swagger
+from time import time
 
 import model, sample, encoder
 
-def interact_model(
-    model_name='124M',
+
+app = Flask(__name__)
+swagger = Swagger(app)
+
+@app.route('/text-generate')
+def inference_gpt2(
+    model_name='',
     seed=None,
     nsamples=1,
     batch_size=1,
@@ -18,28 +30,28 @@ def interact_model(
     top_k=0,
     top_p=1,
     models_dir='models',
-    text = 'how are you?'
+    text = None
 ):
+    """Endpoints takes input text to generate text out of it.
+    ---
+    parameters:
+      - name: input_text
+        in: query
+        type: number
+        required: true
+      - name: model_name
+        in: query
+        type: string
+        enum: ['124M', '355M', '774M', '1558M']
+        required: true
+        default: all         
+      
     """
-    Interactively run the model
-    :model_name=124M : String, which model to use
-    :seed=None : Integer seed for random number generators, fix seed to reproduce
-     results
-    :nsamples=1 : Number of samples to return total
-    :batch_size=1 : Number of batches (only affects speed/memory).  Must divide nsamples.
-    :length=None : Number of tokens in generated text, if None (default), is
-     determined by model hyperparameters
-    :temperature=1 : Float value controlling randomness in boltzmann
-     distribution. Lower temperature results in less random completions. As the
-     temperature approaches zero, the model will become deterministic and
-     repetitive. Higher temperature results in more random completions.
-    :top_k=0 : Integer value controlling diversity. 1 means only 1 word is
-     considered for each step (token), resulting in deterministic completions,
-     while 40 means 40 words are considered at each step. 0 (default) is a
-     special setting meaning no restrictions. 40 generally is a good value.
-     :models_dir : path to parent folder containing model subfolders
-     (i.e. contains the <model_name> folder)
-    """
+    start = time()
+
+    input_text = request.args.get("input_text")
+    model_name = request.args.get("model_name")    
+
     models_dir = os.path.expanduser(os.path.expandvars(models_dir))
     if batch_size is None:
         batch_size = 1
@@ -71,7 +83,7 @@ def interact_model(
         saver.restore(sess, ckpt)
 
 
-        raw_text = text
+        raw_text = input_text
         context_tokens = enc.encode(raw_text)        
         generated = 0
         for _ in range(nsamples // batch_size):
@@ -85,7 +97,14 @@ def interact_model(
             print(text)
         print("=" * 80)
 
+        output = text
+        elapsed = time() - start
+        print('Inference time: {}'.format(elapsed))
+
+        return output
+    
+    
+
 
 if __name__ == '__main__':
-    fire.Fire(interact_model)
-
+    app.run()
