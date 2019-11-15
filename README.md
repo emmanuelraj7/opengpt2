@@ -68,10 +68,10 @@ To run it locally:
 
 
 ```
-docker run -d "image-id"
+docker run -d -p 8000:8000 containerid
 ```
 
-3. 
+Bind port 8000 of the container to your local machine, as the Apache server in the container is running at port 8000.
 
 
 ## Built With
