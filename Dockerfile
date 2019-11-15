@@ -22,4 +22,5 @@ RUN /opt/conda/bin/mod_wsgi-express install-module
 RUN mod_wsgi-express setup-server flask_predict_api.wsgi --port=8000 \
     --user www-data --group www-data \
     --server-root=/etc/mod_wsgi-express-80
+RUN python3 concatconfigfile.py
 CMD /etc/mod_wsgi-express-80/apachectl start -D FOREGROUND
